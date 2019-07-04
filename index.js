@@ -36,7 +36,7 @@ app.get('/api/persons/:id', (req, res) => {
     const id = Number(req.params.id)
     const personById = persons.find(person => person.id === id)
     typeof personById !== 'undefined'
-        ? res.send(JSON.stringify(persons.find(person => person.id === id)))
+        ? res.send(persons.find(person => person.id === id))
         : res.status(404).send('404')
 })
 
@@ -52,19 +52,25 @@ app.delete('/api/persons/:id', (req, res) => {
 })
 
 app.get('/api/persons', (req, res) => {
-    res.send(JSON.stringify(persons))
+    res.send(persons)
 })
 
 app.post('/api/persons', (req, res) => {
     const newPerson = req.body
-    persons.push(
-        {
-            name: newPerson.name,
-            number: newPerson.number,
-            id: Math.floor(Math.random() * 10000)
-        }
-    )
-    res.redirect('/api/persons')
+    if (typeof newPerson.name === 'undefined' || typeof newPerson.number === 'undefined') {
+        res.status(404).send({ error: "name or number missing" })
+    } else if (persons.filter(person => person.name === newPerson.name).length > 0) {
+        res.status(404).send({ error: "name is already in the phonebook" })
+    } else {
+        persons.push(
+            {
+                name: newPerson.name,
+                number: newPerson.number,
+                id: Math.floor(Math.random() * 10000)
+            }
+        )
+        res.redirect('/api/persons')
+    }
 })
 
 app.get('/info', (req, res) => {
