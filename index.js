@@ -24,6 +24,14 @@ let persons = [
     }
 ]
 
+app.get('/api/persons/:id', (req, res) => {
+    const id = Number(req.params.id)
+    const personById = persons.find(person => person.id === id)
+    typeof personById !== 'undefined'
+        ? res.send(JSON.stringify(persons.find(person => person.id === id)))
+        : res.status(404).send('404')
+})
+
 app.get('/api/persons', (req, res) => {
     res.send(JSON.stringify(persons))
 })
