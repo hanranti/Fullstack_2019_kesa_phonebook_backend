@@ -21,6 +21,11 @@ let persons = [
         "name": "Mary Poppendieck",
         "number": "39-23-6423122",
         "id": 4
+    },
+    {
+        "name": "dsajdjasdas",
+        "number": "11111",
+        "id": 5
     }
 ]
 
@@ -30,6 +35,17 @@ app.get('/api/persons/:id', (req, res) => {
     typeof personById !== 'undefined'
         ? res.send(JSON.stringify(persons.find(person => person.id === id)))
         : res.status(404).send('404')
+})
+
+app.delete('/api/persons/:id', (req, res) => {
+    const id = Number(req.params.id)
+    const personById = persons.find(person => person.id === id)
+    if (typeof personById !== 'undefined') {
+        persons = persons.filter(person => person.id !== id)
+        res.status(200).send('200')
+    } else {
+        res.status(404).send('404')
+    }
 })
 
 app.get('/api/persons', (req, res) => {
