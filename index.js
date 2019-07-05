@@ -1,8 +1,10 @@
 const express = require('express')
 const app = express()
 const bodyParser = require('body-parser')
+const morgan = require('morgan')
 
 app.use(bodyParser.json())
+app.use(morgan('tiny'))
 
 let persons = [
     {
@@ -36,8 +38,8 @@ app.get('/api/persons/:id', (req, res) => {
     const id = Number(req.params.id)
     const personById = persons.find(person => person.id === id)
     typeof personById !== 'undefined'
-        ? res.send(persons.find(person => person.id === id))
-        : res.status(404).send('404')
+        ? res.status(200).send(persons.find(person => person.id === id))
+        : res.status(404).send({ error: "not found" })
 })
 
 app.delete('/api/persons/:id', (req, res) => {
@@ -45,31 +47,29 @@ app.delete('/api/persons/:id', (req, res) => {
     const personById = persons.find(person => person.id === id)
     if (typeof personById !== 'undefined') {
         persons = persons.filter(person => person.id !== id)
-        res.status(200).send('200')
+        res.status(204).send()
     } else {
-        res.status(404).send('404')
+        res.status(404).send({ error: "not found" })
     }
 })
 
 app.get('/api/persons', (req, res) => {
-    res.send(persons)
+    res.status(200).send(persons)
 })
 
 app.post('/api/persons', (req, res) => {
-    const newPerson = req.body
+    const newPerson = {
+        name: req.body.name,
+        number: req.body.number,
+        id: Math.floor(Math.random() * 10000)
+    }
     if (typeof newPerson.name === 'undefined' || typeof newPerson.number === 'undefined') {
-        res.status(404).send({ error: "name or number missing" })
+        res.status(400).send({ error: "name or number missing" })
     } else if (persons.filter(person => person.name === newPerson.name).length > 0) {
-        res.status(404).send({ error: "name is already in the phonebook" })
+        res.status(400).send({ error: "name is already in the phonebook" })
     } else {
-        persons.push(
-            {
-                name: newPerson.name,
-                number: newPerson.number,
-                id: Math.floor(Math.random() * 10000)
-            }
-        )
-        res.redirect('/api/persons')
+        persons.push(newPerson)
+        res.status(201).send(newPerson)
     }
 })
 
