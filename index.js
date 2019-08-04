@@ -90,5 +90,5 @@ app.get('/info', (req, res) => {
     res.send(`<p>Phonebook has info for ${persons.length} people</p><p>${currentTime}</p>`)
 })
 
-const port = 3001
+const port = process.env.PORT
 app.listen(port)
