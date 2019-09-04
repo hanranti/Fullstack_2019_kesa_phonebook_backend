@@ -73,7 +73,9 @@ app.delete('/api/persons/:id', (req, res) => {
 
 app.get('/info', (req, res) => {
     var currentTime = new Date()
-    res.send(`<p>Phonebook has info for ${persons.length} people</p><p>${currentTime}</p>`)
+    Person.find({}).then(persons => {
+        res.send(`<p>Phonebook has info for ${persons.length} people</p><p>${currentTime}</p>`)
+    })
 })
 
 // const port = process.env.PORT
