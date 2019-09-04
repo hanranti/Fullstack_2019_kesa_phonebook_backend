@@ -17,29 +17,27 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
 app.use(express.static('build'))
 app.use(cors())
 
-app.get('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id)
-    Person.find({ _id: id }).then(personById => {
-        personById.length === 0
-            ? res.status(200).send(personById)
-            : res.status(404).send({ error: "not found" })
-    })
-})
-
-app.delete('/api/persons/:id', (req, res) => {
-    const id = String(req.params.id)
-    Person.find({ _id: id })
-        .remove(response => {
-            res.status(204).send()
-            persons = persons.filter(person => person._id !== id)
-        })
-        .catch(error => res.status(404).send({ error: "not found" }))
-})
-
 app.get('/api/persons', (req, res) => {
-    Person.find({}).then(persons => {
-        res.status(200).send(persons)
-    })
+    Person.find({})
+        .then(persons => {
+            res.status(200).send(persons)
+        })
+        .catch(error => {
+            res.status(500).send({ error })
+        })
+})
+
+app.get('/api/persons/:id', (req, res) => {
+    const id = String(req.params.id)
+    Person.findOne({ _id: id })
+        .then(personById => {
+            personById
+                ? res.status(200).send(personById)
+                : res.status(404).send({ error: "not found" })
+        })
+        .catch(error => {
+            res.status(500).send({ error })
+        })
 })
 
 app.post('/api/persons', (req, res) => {
@@ -48,15 +46,29 @@ app.post('/api/persons', (req, res) => {
         number: req.body.number
     })
 
-    if (typeof newPerson.name === 'undefined' || typeof newPerson.number === 'undefined') {
-        res.status(400).send({ error: "name or number missing" })
-    } else if (persons.filter(person => person.name === newPerson.name).length > 0) {
-        res.status(400).send({ error: "name is already in the phonebook" })
-    } else {
-        newPerson.save().then(response => {
-            res.status(201).send(newPerson)
+    Person.find({ name: newPerson.name })
+        .then(matchedPersons => {
+            if (!newPerson.name || !newPerson.number) {
+                res.status(400).send({ error: "name or number missing" })
+            } else if (matchedPersons.length > 0) {
+                res.status(400).send({ error: "name is already in the phonebook" })
+            } else {
+                newPerson.save().then(response => {
+                    res.status(201).send(newPerson)
+                })
+            }
         })
-    }
+})
+
+app.delete('/api/persons/:id', (req, res) => {
+    const id = String(req.params.id)
+    Person.findOneAndDelete({ _id: id })
+        .then(result => {
+            res.status(204).send({ result: result })
+        })
+        .catch(error => {
+            res.status(404).send({ error })
+        })
 })
 
 app.get('/info', (req, res) => {
