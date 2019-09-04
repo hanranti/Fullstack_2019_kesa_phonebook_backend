@@ -1,8 +1,11 @@
+require('dotenv').config()
 const express = require('express')
 const app = express()
 const bodyParser = require('body-parser')
 const morgan = require('morgan')
 const cors = require('cors')
+
+const Person = require("./models/person")
 
 morgan.token('body', (req) => {
     return JSON.stringify(req.body)
@@ -80,6 +83,7 @@ app.post('/api/persons', (req, res) => {
     } else if (persons.filter(person => person.name === newPerson.name).length > 0) {
         res.status(400).send({ error: "name is already in the phonebook" })
     } else {
+        mongo.addPerson(newPerson)
         persons.push(newPerson)
         res.status(201).send(newPerson)
     }
