@@ -1,4 +1,5 @@
 require('dotenv').config()
+
 const express = require('express')
 const app = express()
 const bodyParser = require('body-parser')
@@ -16,76 +17,45 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
 app.use(express.static('build'))
 app.use(cors())
 
-let persons = [
-    {
-        "name": "Arto Hellas",
-        "number": "040-123456",
-        "id": 1
-    },
-    {
-        "name": "Ada Lovelace",
-        "number": "39-44-5323523",
-        "id": 2
-    },
-    {
-        "name": "Dan Abramov",
-        "number": "12-43-234345",
-        "id": 3
-    },
-    {
-        "name": "Mary Poppendieck",
-        "number": "39-23-6423122",
-        "id": 4
-    },
-    {
-        "name": "dsajdjasdas",
-        "number": "11111",
-        "id": 5
-    },
-    {
-        "name": "testi",
-        "number": "123",
-        "id": 6
-    }
-]
-
 app.get('/api/persons/:id', (req, res) => {
     const id = Number(req.params.id)
-    const personById = persons.find(person => person.id === id)
-    typeof personById !== 'undefined'
-        ? res.status(200).send(persons.find(person => person.id === id))
-        : res.status(404).send({ error: "not found" })
+    Person.find({ _id: id }).then(personById => {
+        personById.length === 0
+            ? res.status(200).send(personById)
+            : res.status(404).send({ error: "not found" })
+    })
 })
 
 app.delete('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id)
-    const personById = persons.find(person => person.id === id)
-    if (typeof personById !== 'undefined') {
-        persons = persons.filter(person => person.id !== id)
-        res.status(204).send()
-    } else {
-        res.status(404).send({ error: "not found" })
-    }
+    const id = String(req.params.id)
+    Person.find({ _id: id })
+        .remove(response => {
+            res.status(204).send()
+            persons = persons.filter(person => person._id !== id)
+        })
+        .catch(error => res.status(404).send({ error: "not found" }))
 })
 
 app.get('/api/persons', (req, res) => {
-    res.status(200).send(persons)
+    Person.find({}).then(persons => {
+        res.status(200).send(persons)
+    })
 })
 
 app.post('/api/persons', (req, res) => {
-    const newPerson = {
+    const newPerson = new Person({
         name: req.body.name,
-        number: req.body.number,
-        id: Math.floor(Math.random() * 10000)
-    }
+        number: req.body.number
+    })
+
     if (typeof newPerson.name === 'undefined' || typeof newPerson.number === 'undefined') {
         res.status(400).send({ error: "name or number missing" })
     } else if (persons.filter(person => person.name === newPerson.name).length > 0) {
         res.status(400).send({ error: "name is already in the phonebook" })
     } else {
-        mongo.addPerson(newPerson)
-        persons.push(newPerson)
-        res.status(201).send(newPerson)
+        newPerson.save().then(response => {
+            res.status(201).send(newPerson)
+        })
     }
 })
 
@@ -94,5 +64,6 @@ app.get('/info', (req, res) => {
     res.send(`<p>Phonebook has info for ${persons.length} people</p><p>${currentTime}</p>`)
 })
 
-const port = process.env.PORT
-app.listen(port)
+// const port = process.env.PORT
+// app.listen(port)
+app.listen(3001)

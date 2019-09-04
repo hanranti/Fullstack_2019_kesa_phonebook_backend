@@ -3,6 +3,8 @@ const mongoose = require('mongoose')
 const url = process.env.MONGODB_URI
 
 mongoose.connect(url, { useNewUrlParser: true })
+    .then(result => { console.log('Connected!') })
+    .catch((error) => { console.log("Error!") })
 
 const personSchema = new mongoose.Schema({
     name: String,
