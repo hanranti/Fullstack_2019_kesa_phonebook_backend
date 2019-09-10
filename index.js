@@ -17,30 +17,51 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
 app.use(express.static('build'))
 app.use(cors())
 
-app.get('/api/persons', (req, res) => {
+const errorHandler = (error, req, res, next) => {
+    console.log(error.message)
+
+    if (error.name === 'CastError' && error.kind == 'ObjectId') {
+        return res.status(400).send({ error: 'malformatted id' })
+    } else {
+        res.status(500).send({ error })
+    }
+
+    next(error)
+}
+
+app.use(errorHandler)
+
+app.get('/api/persons', (req, res, next) => {
     Person.find({})
         .then(persons => {
             res.status(200).send(persons)
         })
-        .catch(error => {
-            res.status(500).send({ error })
-        })
+        .catch(error => next(error))
 })
 
-app.get('/api/persons/:id', (req, res) => {
+app.get('/api/persons/:id', (req, res, next) => {
     const id = String(req.params.id)
-    Person.findOne({ _id: id })
+    Person.findOne({ _id: id, name: req.body.name })
         .then(personById => {
             personById
                 ? res.status(200).send(personById)
                 : res.status(404).send({ error: "not found" })
         })
-        .catch(error => {
-            res.status(500).send({ error })
-        })
+        .catch(error => next(error))
 })
 
-app.post('/api/persons', (req, res) => {
+app.put('/api/persons/:id', (req, res, next) => {
+    const id = String(req.params.id)
+    Person.update({ _id: id }, { number: req.body.number })
+        .then(personById => {
+            personById
+                ? res.status(200).send(personById)
+                : res.status(404).send({ error: "not found" })
+        })
+        .catch(error => next(error))
+})
+
+app.post('/api/persons', (req, res, next) => {
     const newPerson = new Person({
         name: req.body.name,
         number: req.body.number
@@ -58,24 +79,25 @@ app.post('/api/persons', (req, res) => {
                 })
             }
         })
+        .catch(error => next(error))
 })
 
-app.delete('/api/persons/:id', (req, res) => {
+app.delete('/api/persons/:id', (req, res, next) => {
     const id = String(req.params.id)
     Person.findOneAndDelete({ _id: id })
         .then(result => {
             res.status(204).send({ result: result })
         })
-        .catch(error => {
-            res.status(404).send({ error })
-        })
+        .catch(error => next(error))
 })
 
 app.get('/info', (req, res) => {
     var currentTime = new Date()
-    Person.find({}).then(persons => {
-        res.send(`<p>Phonebook has info for ${persons.length} people</p><p>${currentTime}</p>`)
-    })
+    Person.find({})
+        .then(persons => {
+            res.send(`<p>Phonebook has info for ${persons.length} people</p><p>${currentTime}</p>`)
+        })
+        .catch(error => next(error))
 })
 
 // const port = process.env.PORT
